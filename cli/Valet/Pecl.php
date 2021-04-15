@@ -137,9 +137,9 @@ class Pecl extends AbstractPecl
     protected function install($extension, $version = null)
     {
         if ($version === null) {
-            $result = $this->cli->runAsUser("pecl install $extension");
+            $result = $this->cli->runAsUser($this->peclCmd() . " install $extension");
         } else {
-            $result = $this->cli->runAsUser("pecl install $extension-$version");
+            $result = $this->cli->runAsUser($this->peclCmd() . " install $extension-$version");
         }
 
         $alias = $this->getExtensionAlias($extension);
@@ -295,9 +295,9 @@ class Pecl extends AbstractPecl
     private function uninstall($extension, $version = null)
     {
         if ($version === null || $version === false) {
-            $this->cli->passthru("pecl uninstall $extension");
+            $this->cli->passthru($this->peclCmd() . " uninstall $extension");
         } else {
-            $this->cli->passthru("pecl uninstall $extension-$version");
+            $this->cli->passthru($this->peclCmd() . " uninstall $extension-$version");
         }
 
         $this->alternativeUninstall($extension);
@@ -309,7 +309,7 @@ class Pecl extends AbstractPecl
     public function updatePeclChannel()
     {
         info('[PECL] Updating PECL channel: pecl.php.net');
-        $this->cli->runAsUser('pecl channel-update pecl.php.net');
+        $this->cli->runAsUser($this->peclCmd() . ' channel-update pecl.php.net');
     }
 
     /**
@@ -437,7 +437,7 @@ class Pecl extends AbstractPecl
      */
     public function isInstalled($extension)
     {
-        return strpos($this->cli->runAsUser('pecl list | grep ' . $extension), $extension) !== false;
+        return strpos($this->cli->runAsUser($this->peclCmd() . ' list | grep ' . $extension), $extension) !== false;
     }
 
     /**

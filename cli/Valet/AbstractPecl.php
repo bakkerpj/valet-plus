@@ -64,13 +64,13 @@ abstract class AbstractPecl
      */
     public function getPhpIniPath()
     {
-        $file = str_replace("\n", '', $this->cli->runAsUser('pecl config-get php_ini'));
+        $file = str_replace("\n", '', $this->cli->runAsUser($this->peclCmd() . ' config-get php_ini'));
 
         if ($file) {
             return $file;
         }
 
-        $grep = $this->cli->runAsUser('php -i | grep php.ini');
+        $grep = $this->cli->runAsUser($this->phpCmd() . ' -i | grep php.ini');
         preg_match('/Path => ([^\s]*)/', $grep, $match);
 
         if (empty($match[1])) {
@@ -83,18 +83,49 @@ abstract class AbstractPecl
     }
 
     /**
+     * Return path of PHP binary currently linked to Homebrew (AND NOT FROM PATH!)
+     *
+     * @return mixed
+     */
+    protected function phpCmd()
+    {
+        if (!$this->files->isLink('/usr/local/bin/php')) {
+            throw new DomainException("Unable to determine linked PHP.");
+        }
+
+        $resolvedPath = $this->files->readLink('/usr/local/bin/php');
+        $resolvedPath = preg_replace(':^\.\./:', '/usr/local/', $resolvedPath);
+        return $resolvedPath;
+    }
+
+    /**
+     * Return path of PECL binary currently linked to Homebrew (AND NOT FROM PATH!)
+     *
+     * @return mixed
+     */
+    protected function peclCmd()
+    {
+        return preg_replace(':/php$:', '/pecl', $this->phpCmd());
+    }
+
+    /**
      * Get the current PHP version from the PECL config.
      *
-     * @return string
+     * @return mixed
      *    The php version as string: 5.6, 7.0, 7.1, 7.2, 7.3, 7.4
      */
     protected function getPhpVersion()
     {
-        $version = $this->cli->runAsUser('pecl version | grep PHP');
-        $version = str_replace('PHP Version:', '', $version);
-        $version = str_replace(' ', '', $version);
-        $version = substr($version, 0, 3);
-        return $version;
+        $resolvedPath = $this->phpCmd();
+        $versions = PhpFpm::SUPPORTED_PHP_FORMULAE;
+
+        foreach ($versions as $version => $brewname) {
+            if (strpos($resolvedPath, '/' . $brewname . '/') !== false) {
+                return $version;
+            }
+        }
+
+        throw new DomainException("Unable to determine linked PHP.");
     }
 
     /**
@@ -108,7 +139,7 @@ abstract class AbstractPecl
     public function isEnabled($extension)
     {
         $alias = $this->getExtensionAlias($extension);
-        $extensions = explode("\n", $this->cli->runAsUser("php -m | grep $alias"));
+        $extensions = explode("\n", $this->cli->runAsUser($this->phpCmd() . " -m | grep $alias"));
         return in_array($alias, $extensions);
     }
 
@@ -119,7 +150,7 @@ abstract class AbstractPecl
      */
     public function getExtensionDirectory()
     {
-        $dir = trim(str_replace("\n", '', $this->cli->runAsUser('pecl config-get ext_dir')));
+        $dir = trim(str_replace("\n", '', $this->cli->runAsUser($this->peclCmd() . ' config-get ext_dir')));
 
         if (strpos($dir, '/Cellar/') !== false) {
             $dir = str_replace('/lib/php/', '/pecl/', $dir);

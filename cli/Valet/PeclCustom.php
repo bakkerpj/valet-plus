@@ -368,7 +368,7 @@ class PeclCustom extends AbstractPecl
     public function isEnabled($extension)
     {
         $alias = $this->getExtensionName($extension);
-        $extensions = explode("\n", $this->cli->runAsUser("php -m | grep '$alias'"));
+        $extensions = explode("\n", $this->cli->runAsUser($this->phpCmd . " -m | grep '$alias'"));
         return in_array($alias, $extensions);
     }
 
