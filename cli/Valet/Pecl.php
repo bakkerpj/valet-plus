@@ -513,7 +513,7 @@ class Pecl extends AbstractPecl
      *
      * @param $extension
      *    The extension key name.
-     * @return null
+     * @return mixed
      */
     private function getVersion($extension)
     {
@@ -521,7 +521,7 @@ class Pecl extends AbstractPecl
         if (array_key_exists($phpVersion, self::EXTENSIONS[$extension])) {
             return self::EXTENSIONS[$extension][$phpVersion];
         }
-        return null;
+        return false;
     }
 
     /**
