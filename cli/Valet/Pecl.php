@@ -43,38 +43,55 @@ class Pecl extends AbstractPecl
      */
     const EXTENSIONS = [
         self::XDEBUG_EXTENSION => [
-            '7.0' => '2.9.0',
-            '5.6' => '2.2.7',
+            '8.0' => '3.0.4',
+            '7.4' => '2.9.8',
+            '7.3' => '2.9.8',
+            '7.2' => '2.9.8',
+            '7.1' => '2.9.8',
+            '7.0' => '2.7.2',
+            '5.6' => '2.5.5',
             'default' => false,
             'extension_type' => self::ZEND_EXTENSION_TYPE
         ],
         self::APCU_EXTENSION => [
-            '7.3' => '5.1.17',
-            '7.2' => '5.1.17',
-            '7.1' => '5.1.17',
-            '7.0' => '5.1.17',
+            '8,0' => '5.1.20',
+            '7.4' => '5.1.20',
+            '7.3' => '5.1.20',
+            '7.2' => '5.1.20',
+            '7.1' => '5.1.20',
+            '7.0' => '5.1.20',
             '5.6' => '4.0.11',
             'extension_type' => self::NORMAL_EXTENSION_TYPE
         ],
         self::GEOIP_EXTENSION => [
+            '8.0' => '1.1.1',
             '7.4' => '1.1.1',
             '7.3' => '1.1.1',
             '7.2' => '1.1.1',
             '7.1' => '1.1.1',
             '7.0' => '1.1.1',
+            '5.6' => '1.1.1',
             'extension_type' => self::NORMAL_EXTENSION_TYPE
         ],
         self::MEMCACHE_EXTENSION => [
-            '7.3' => '3.1.3',
-            '7.2' => '3.1.3',
-            '7.1' => '3.1.3',
-            '7.0' => '3.1.3',
+            '8.0' => '3.1.5',
+            '7.4' => '3.1.5',
+            '7.3' => '3.1.5',
+            '7.2' => '3.1.5',
+            '7.1' => '3.1.5',
+            '7.0' => '3.1.5',
+            '5.6' => '2.2.0',
             'default' => false,
             'extension_type' => self::NORMAL_EXTENSION_TYPE
         ],
         self::YAML_EXTENSION => [
-            '5.6' => '1.3.1',
+            '8.0' => '2.2.1',
+            '7.4' => '2.2.1',
+            '7.3' => '2.2.1',
+            '7.2' => '2.2.1',
+            '7.1' => '2.2.1',
             '7.0' => '2.0.4',
+            '5.6' => '1.3.2',
             'extension_type' => self::NORMAL_EXTENSION_TYPE
         ]
     ];
@@ -95,6 +112,7 @@ class Pecl extends AbstractPecl
      */
     public function installExtensions($onlyDefaults = true)
     {
+        $this->uninstallExtensions();
         info("[PECL] Installing extensions");
         foreach (self::EXTENSIONS as $extension => $versions) {
             if ($onlyDefaults && $this->isDefaultExtension($extension) === false) {
@@ -202,9 +220,7 @@ class Pecl extends AbstractPecl
     {
         info("[PECL] Removing extensions");
         foreach (self::EXTENSIONS as $extension => $versions) {
-            if ($this->getVersion($extension) !== false) {
-                $this->disableExtension($extension);
-            }
+            $this->disableExtension($extension);
         }
     }
 
@@ -218,12 +234,11 @@ class Pecl extends AbstractPecl
      */
     public function disableExtension($extension)
     {
-        $version = $this->getVersion($extension);
         if ($this->isEnabled($extension)) {
             $this->disable($extension);
         }
         if ($this->isInstalled($extension)) {
-            $this->uninstall($extension, $version);
+            $this->uninstall($extension);
             return true;
         }
         return false;
@@ -290,16 +305,10 @@ class Pecl extends AbstractPecl
      *
      * @param $extension
      *    The extension key name.
-     * @param null $version
      */
-    private function uninstall($extension, $version = null)
+    private function uninstall($extension)
     {
-        if ($version === null || $version === false) {
-            $this->cli->passthru($this->peclCmd() . " uninstall $extension");
-        } else {
-            $this->cli->passthru($this->peclCmd() . " uninstall $extension-$version");
-        }
-
+        $this->cli->passthru($this->peclCmd() . " uninstall $extension");
         $this->alternativeUninstall($extension);
     }
 
